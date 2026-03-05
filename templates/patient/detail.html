@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Patient Detail</title>
+  <style>
+    :root {
+      --primary: #2A7DE1;
+      --secondary: #E8F1FF;
+      --accent: #00A8A8;
+      --text: #1F2937;
+      --card: #FFFFFF;
+      --border: #c7dbfb;
+      --soft: #f6faff;
+    }
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { margin: 0; background: var(--secondary); color: var(--text); }
+    .topbar {
+      background: var(--primary);
+      color: white;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 18px rgba(42, 125, 225, 0.28);
+    }
+    .topbar a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 7px 12px;
+      background: rgba(255, 255, 255, 0.12);
+      font-weight: 600;
+    }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 52px); }
+    .sidebar {
+      background: #dce9ff;
+      color: var(--text);
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-right: 1px solid var(--border);
+    }
+    .sidebar h3 { margin: 0 0 10px 0; color: var(--primary); }
+    .tab-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(42, 125, 225, 0.25);
+    }
+    .visit-log {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #a4c4f5;
+      max-height: 48vh;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .visit-item {
+      margin-bottom: 12px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 6px 14px rgba(42, 125, 225, 0.08);
+    }
+    .main { padding: 20px; }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+      box-shadow: 0 12px 28px rgba(42, 125, 225, 0.1);
+    }
+    .alert {
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      border: 1px solid;
+    }
+    .alert.error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+    .alert.success {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+    .patient-card { display: grid; grid-template-columns: 96px 1fr; gap: 16px; align-items: start; }
+    .photo {
+      width: 96px; height: 96px; border-radius: 12px; background: var(--secondary);
+      display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 30px;
+      border: 1px solid var(--border);
+    }
+    .patient-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 10px;
+      font-size: 14px;
+    }
+    .tab-switcher { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .switch-pill {
+      border: 1px solid var(--border);
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .switch-pill.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 8px 16px rgba(42, 125, 225, 0.24);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .records .record-item {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 10px; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 14px;
+      background: #fcfdff;
+      color: var(--text);
+    }
+    textarea { min-height: 76px; }
+    .full { grid-column: 1 / -1; }
+    .btn {
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      padding: 10px 14px;
+      cursor: pointer;
+      margin-top: 8px;
+      font-weight: 700;
+      box-shadow: 0 8px 16px rgba(0, 168, 168, 0.24);
+    }
+    .btn-view {
+      border: none;
+      border-radius: 6px;
+      background: var(--primary);
+      color: white;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      margin: 0;
+    }
+    .btn-delete {
+      border: none;
+      border-radius: 6px;
+      background: #ef4444;
+      color: white;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      margin: 0;
+    }
+    .record-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .record-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .record-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(31, 41, 55, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal-box {
+      width: min(560px, 92vw);
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      box-shadow: 0 20px 40px rgba(42, 125, 225, 0.22);
+    }
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 10px;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .modal-actions { text-align: right; margin-top: 14px; }
+    .muted { color: #516079; }
+    a { color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div><strong>UHC Portal</strong></div>
+    <div>
+      Dr. {{ request.user.get_full_name|default:request.user.username }}
+      <a href="{% url 'logout' %}">Logout</a>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div>
+        <h3>Sections</h3>
+        <button class="tab-btn active" data-tab="vitals">• Vitals</button>
+        <button class="tab-btn" data-tab="lab">• Lab</button>
+        <button class="tab-btn" data-tab="imaging">• Imaging</button>
+        <button class="tab-btn" data-tab="prescriptions">• Prescriptions</button>
+        <button class="tab-btn" data-tab="surgery">• Surgery</button>
+        <button class="tab-btn" data-tab="diagnosis">• Diagnosis</button>
+      </div>
+
+      <div class="visit-log">
+        <h3>Visit Log</h3>
+        {% for log in visit_log %}
+          <div class="visit-item">
+            <div>📋 {{ log.timestamp|date:"M d, Y" }} — {{ log.timestamp|date:"g:i A" }}</div>
+            <div>Dr. {{ log.doctor }} {{ log.action }}</div>
+            <div class="muted">→ {{ log.summary }}</div>
+          </div>
+        {% empty %}
+          <div class="visit-item">No visit logs yet.</div>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <main class="main">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <section class="card patient-card">
+        <div class="photo">👤</div>
+        <div>
+          <h2 style="margin-top: 0;">{{ patient.name }}</h2>
+          <div class="patient-grid">
+            <div><strong>Age:</strong> {{ patient.age }}</div>
+            <div><strong>Gender:</strong> {{ patient.gender }}</div>
+            <div><strong>Blood Group:</strong> {{ patient.blood_group }}</div>
+            <div><strong>NFC ID:</strong> {{ patient.nfc_uid }}</div>
+            <div><strong>Phone:</strong> {{ patient.phone }}</div>
+            <div><strong>Health Score:</strong> {{ patient.health_score }} / 100</div>
+            <div class="full"><strong>Address:</strong> {{ patient.address }}</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="tab-switcher">
+        <button class="switch-pill active" data-tab="vitals">Vitals</button>
+        <button class="switch-pill" data-tab="lab">Lab</button>
+        <button class="switch-pill" data-tab="imaging">Imaging</button>
+        <button class="switch-pill" data-tab="prescriptions">Prescriptions</button>
+        <button class="switch-pill" data-tab="surgery">Surgery</button>
+        <button class="switch-pill" data-tab="diagnosis">Diagnosis</button>
+      </div>
+
+      <section class="tab-panel active" id="vitals-panel">
+        <div class="card records">
+          <h3>Existing Vitals Records</h3>
+          {% for item in vitals %}
+            <div class="record-item">
+              <div class="record-head">
+                <div class="record-text">
+                  BP: {{ item.blood_pressure|default:"-" }} | Sugar: {{ item.blood_sugar|default:"-" }} | HR: {{ item.heart_rate|default:"-" }} — Dr. {{ item.recorded_by.get_full_name|default:item.recorded_by }} | {{ item.recorded_at|date:"d M Y" }}
+                </div>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    class="btn-view vitals-view-btn"
+                    data-recorded-at="{{ item.recorded_at|date:'d M Y, g:i A' }}"
+                    data-recorded-by="{{ item.recorded_by.get_full_name|default:item.recorded_by }}"
+                    data-blood-pressure="{{ item.blood_pressure|default:'-' }}"
+                    data-blood-sugar="{{ item.blood_sugar|default:'-' }}"
+                    data-heart-rate="{{ item.heart_rate|default:'-' }}"
+                    data-temperature="{{ item.temperature|default:'-' }}"
+                    data-spo2="{{ item.spo2|default:'-' }}"
+                    data-weight="{{ item.weight|default:'-' }}"
+                  >
+                    View
+                  </button>
+                  <form method="post" action="{% url 'delete_vitals' patient.id item.id %}" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this vitals record?');">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="record-item">No vitals records yet.</div>
+          {% endfor %}
+        </div>
+
+        <div class="card">
+          <h3>Add New Vitals</h3>
+          <form method="post" action="{% url 'add_vitals' patient.id %}">
+            {% csrf_token %}
+            <div class="form-grid">
+              <input type="text" name="blood_pressure" placeholder="Blood Pressure (120/80)" required>
+              <input type="text" name="blood_sugar" placeholder="Blood Sugar (90 mg/dL)" required>
+              <input type="text" name="heart_rate" placeholder="Heart Rate (72 bpm)" required>
+              <input type="text" name="temperature" placeholder="Temperature (36.6 °C)" required>
+              <input type="text" name="spo2" placeholder="SpO2 (98%)" required>
+              <input type="text" name="weight" placeholder="Weight (70 kg)" required>
+            </div>
+            <button class="btn" type="submit">Save Vitals</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="lab-panel">
+        <div class="card records">
+          <h3>Existing Lab Records</h3>
+          {% for item in labs %}
+            <div class="record-item">
+              <div class="record-head">
+                <div class="record-text">
+                  🔬 {{ item.test_name }} Result: {{ item.result }} Ref: {{ item.reference_range|default:"-" }} [{{ item.status }}]
+                  {% if item.file %}<a href="{{ item.file.url }}" target="_blank">📄 File</a>{% endif %}
+                </div>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    class="btn-view lab-view-btn"
+                    data-added-at="{{ item.added_at|date:'d M Y, g:i A' }}"
+                    data-added-by="{{ item.added_by.get_full_name|default:item.added_by }}"
+                    data-test-name="{{ item.test_name|default:'-' }}"
+                    data-result="{{ item.result|default:'-' }}"
+                    data-reference-range="{{ item.reference_range|default:'-' }}"
+                    data-status="{{ item.status|default:'-' }}"
+                    data-notes="{{ item.notes|default:'-' }}"
+                    data-file="{% if item.file %}{{ item.file.url }}{% else %}-{% endif %}"
+                  >
+                    View
+                  </button>
+                  <form method="post" action="{% url 'delete_lab' patient.id item.id %}" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this lab record?');">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="record-item">No lab records yet.</div>
+          {% endfor %}
+        </div>
+
+        <div class="card">
+          <h3>Add New Lab Result</h3>
+          <form method="post" action="{% url 'add_lab' patient.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-grid">
+              <input type="text" name="test_name" placeholder="Test Name" required>
+              <input type="text" name="result" placeholder="Result Value" required>
+              <input type="text" name="reference_range" placeholder="Reference Range">
+              <select name="status" required>
+                <option value="">Status</option>
+                <option value="Normal">Normal</option>
+                <option value="High">High</option>
+                <option value="Low">Low</option>
+                <option value="Critical">Critical</option>
+              </select>
+              <textarea class="full" name="notes" placeholder="Notes"></textarea>
+              <input class="full" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg">
+            </div>
+            <button class="btn" type="submit">Add Lab Result</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="imaging-panel">
+        <div class="card records">
+          <h3>Existing Imaging Records</h3>
+          {% for item in imaging %}
+            <div class="record-item">
+              <div class="record-head">
+                <div class="record-text">
+                  🩻 {{ item.scan_type }} — {{ item.body_part }} | Findings: {{ item.findings|default:"-" }}
+                  {% if item.file %}<a href="{{ item.file.url }}" target="_blank">📄 File</a>{% endif %}
+                </div>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    class="btn-view imaging-view-btn"
+                    data-added-at="{{ item.added_at|date:'d M Y, g:i A' }}"
+                    data-added-by="{{ item.added_by.get_full_name|default:item.added_by }}"
+                    data-scan-type="{{ item.scan_type|default:'-' }}"
+                    data-body-part="{{ item.body_part|default:'-' }}"
+                    data-findings="{{ item.findings|default:'-' }}"
+                    data-impression="{{ item.impression|default:'-' }}"
+                    data-file="{% if item.file %}{{ item.file.url }}{% else %}-{% endif %}"
+                  >
+                    View
+                  </button>
+                  <form method="post" action="{% url 'delete_imaging' patient.id item.id %}" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this imaging record?');">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="record-item">No imaging records yet.</div>
+          {% endfor %}
+        </div>
+
+        <div class="card">
+          <h3>Add New Imaging</h3>
+          <form method="post" action="{% url 'add_imaging' patient.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-grid">
+              <select name="scan_type" required>
+                <option value="">Scan Type</option>
+                <option value="X-Ray">X-Ray</option>
+                <option value="MRI">MRI</option>
+                <option value="CT Scan">CT Scan</option>
+                <option value="Ultrasound">Ultrasound</option>
+                <option value="Echo">Echo</option>
+              </select>
+              <input type="text" name="body_part" placeholder="Body Part" required>
+              <textarea class="full" name="findings" placeholder="Findings"></textarea>
+              <textarea class="full" name="impression" placeholder="Impression"></textarea>
+              <input class="full" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg">
+            </div>
+            <button class="btn" type="submit">Add Imaging Report</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="prescriptions-panel">
+        <div class="card records">
+          <h3>Existing Prescriptions</h3>
+          {% for item in prescriptions %}
+            <div class="record-item">
+              <div class="record-head">
+                <div class="record-text">
+                  💊 {{ item.medicine }} | {{ item.dosage }} | {{ item.duration }}
+                  {% if item.file %}<a href="{{ item.file.url }}" target="_blank">📄 File</a>{% endif %}
+                </div>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    class="btn-view prescription-view-btn"
+                    data-added-at="{{ item.added_at|date:'d M Y, g:i A' }}"
+                    data-added-by="{{ item.added_by.get_full_name|default:item.added_by }}"
+                    data-medicine="{{ item.medicine|default:'-' }}"
+                    data-dosage="{{ item.dosage|default:'-' }}"
+                    data-duration="{{ item.duration|default:'-' }}"
+                    data-instructions="{{ item.instructions|default:'-' }}"
+                    data-file="{% if item.file %}{{ item.file.url }}{% else %}-{% endif %}"
+                  >
+                    View
+                  </button>
+                  <form method="post" action="{% url 'delete_prescription' patient.id item.id %}" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this prescription record?');">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="record-item">No prescription records yet.</div>
+          {% endfor %}
+        </div>
+
+        <div class="card">
+          <h3>Add New Prescription</h3>
+          <form method="post" action="{% url 'add_prescription' patient.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-grid">
+              <input type="text" name="medicine" placeholder="Medicine Name" required>
+              <input type="text" name="dosage" placeholder="Dosage" required>
+              <input type="text" name="duration" placeholder="Duration" required>
+              <textarea class="full" name="instructions" placeholder="Instructions"></textarea>
+              <input class="full" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg">
+            </div>
+            <button class="btn" type="submit">Add Prescription</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="surgery-panel">
+        <div class="card records">
+          <h3>Existing Surgery Records</h3>
+          {% for item in surgeries %}
+            <div class="record-item">
+              <div class="record-head">
+                <div class="record-text">
+                  🔪 {{ item.procedure }} | {{ item.surgery_date }} | {{ item.surgeon }} | [{{ item.outcome }}]
+                  {% if item.file %}<a href="{{ item.file.url }}" target="_blank">📄 File</a>{% endif %}
+                </div>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    class="btn-view surgery-view-btn"
+                    data-added-at="{{ item.added_at|date:'d M Y, g:i A' }}"
+                    data-added-by="{{ item.added_by.get_full_name|default:item.added_by }}"
+                    data-procedure="{{ item.procedure|default:'-' }}"
+                    data-surgery-date="{{ item.surgery_date|date:'d M Y' }}"
+                    data-surgeon="{{ item.surgeon|default:'-' }}"
+                    data-outcome="{{ item.outcome|default:'-' }}"
+                    data-notes="{{ item.notes|default:'-' }}"
+                    data-file="{% if item.file %}{{ item.file.url }}{% else %}-{% endif %}"
+                  >
+                    View
+                  </button>
+                  <form method="post" action="{% url 'delete_surgery' patient.id item.id %}" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this surgery record?');">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="record-item">No surgery records yet.</div>
+          {% endfor %}
+        </div>
+
+        <div class="card">
+          <h3>Add New Surgery</h3>
+          <form method="post" action="{% url 'add_surgery' patient.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-grid">
+              <input type="text" name="procedure" placeholder="Procedure" required>
+              <input type="date" name="surgery_date" required>
+              <input type="text" name="surgeon" placeholder="Surgeon" required>
+              <select name="outcome" required>
+                <option value="">Outcome</option>
+                <option value="Successful">Successful</option>
+                <option value="Complicated">Complicated</option>
+                <option value="Ongoing Recovery">Ongoing Recovery</option>
+              </select>
+              <textarea class="full" name="notes" placeholder="Notes"></textarea>
+              <input class="full" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg">
+            </div>
+            <button class="btn" type="submit">Add Surgery Record</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="diagnosis-panel">
+        <div class="card records">
+          <h3>Existing Diagnoses</h3>
+          {% for item in diagnoses %}
+            <div class="record-item">
+              <div class="record-head">
+                <div class="record-text">📝 {{ item.condition }} [{{ item.severity }}] — {{ item.notes|default:"No notes" }}</div>
+                <div class="record-actions">
+                  <button
+                    type="button"
+                    class="btn-view diagnosis-view-btn"
+                    data-added-at="{{ item.added_at|date:'d M Y, g:i A' }}"
+                    data-added-by="{{ item.added_by.get_full_name|default:item.added_by }}"
+                    data-condition="{{ item.condition|default:'-' }}"
+                    data-severity="{{ item.severity|default:'-' }}"
+                    data-notes="{{ item.notes|default:'-' }}"
+                  >
+                    View
+                  </button>
+                  <form method="post" action="{% url 'delete_diagnosis' patient.id item.id %}" style="display: inline; margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this diagnosis record?');">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="record-item">No diagnosis records yet.</div>
+          {% endfor %}
+        </div>
+
+        <div class="card">
+          <h3>Add New Diagnosis</h3>
+          <form method="post" action="{% url 'add_diagnosis' patient.id %}">
+            {% csrf_token %}
+            <div class="form-grid">
+              <input type="text" name="condition" placeholder="Condition" required>
+              <select name="severity" required>
+                <option value="">Severity</option>
+                <option value="Mild">Mild</option>
+                <option value="Moderate">Moderate</option>
+                <option value="Severe">Severe</option>
+                <option value="Chronic">Chronic</option>
+              </select>
+              <textarea class="full" name="notes" placeholder="Notes"></textarea>
+            </div>
+            <button class="btn" type="submit">Add Diagnosis</button>
+          </form>
+        </div>
+      </section>
+
+      <div class="card" style="margin-top: 14px;">
+        <a href="{% url 'search_patient' %}">Search Another Patient</a> |
+        <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="vitalsModal" aria-hidden="true">
+    <div class="modal-box">
+      <h3 style="margin: 0;">Vitals Record Details</h3>
+      <div class="modal-grid">
+        <div><strong>Recorded At:</strong> <span id="modalRecordedAt">-</span></div>
+        <div><strong>Recorded By:</strong> <span id="modalRecordedBy">-</span></div>
+        <div><strong>Blood Pressure:</strong> <span id="modalBloodPressure">-</span></div>
+        <div><strong>Blood Sugar:</strong> <span id="modalBloodSugar">-</span></div>
+        <div><strong>Heart Rate:</strong> <span id="modalHeartRate">-</span></div>
+        <div><strong>Temperature:</strong> <span id="modalTemperature">-</span></div>
+        <div><strong>SpO2:</strong> <span id="modalSpo2">-</span></div>
+        <div><strong>Weight:</strong> <span id="modalWeight">-</span></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-view" id="closeVitalsModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="labModal" aria-hidden="true">
+    <div class="modal-box">
+      <h3 style="margin: 0;">Lab Record Details</h3>
+      <div class="modal-grid">
+        <div><strong>Added At:</strong> <span id="labAddedAt">-</span></div>
+        <div><strong>Added By:</strong> <span id="labAddedBy">-</span></div>
+        <div><strong>Test Name:</strong> <span id="labTestName">-</span></div>
+        <div><strong>Result:</strong> <span id="labResult">-</span></div>
+        <div><strong>Reference Range:</strong> <span id="labReferenceRange">-</span></div>
+        <div><strong>Status:</strong> <span id="labStatus">-</span></div>
+        <div class="full"><strong>Notes:</strong> <span id="labNotes">-</span></div>
+        <div class="full"><strong>File:</strong> <span id="labFile">-</span></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn-view" id="closeLabModal">Close</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="imagingModal" aria-hidden="true">
+    <div class="modal-box">
+      <h3 style="margin: 0;">Imaging Record Details</h3>
+      <div class="modal-grid">
+        <div><strong>Added At:</strong> <span id="imagingAddedAt">-</span></div>
+        <div><strong>Added By:</strong> <span id="imagingAddedBy">-</span></div>
+        <div><strong>Scan Type:</strong> <span id="imagingScanType">-</span></div>
+        <div><strong>Body Part:</strong> <span id="imagingBodyPart">-</span></div>
+        <div class="full"><strong>Findings:</strong> <span id="imagingFindings">-</span></div>
+        <div class="full"><strong>Impression:</strong> <span id="imagingImpression">-</span></div>
+        <div class="full"><strong>File:</strong> <span id="imagingFile">-</span></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn-view" id="closeImagingModal">Close</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="prescriptionModal" aria-hidden="true">
+    <div class="modal-box">
+      <h3 style="margin: 0;">Prescription Record Details</h3>
+      <div class="modal-grid">
+        <div><strong>Added At:</strong> <span id="prescriptionAddedAt">-</span></div>
+        <div><strong>Added By:</strong> <span id="prescriptionAddedBy">-</span></div>
+        <div><strong>Medicine:</strong> <span id="prescriptionMedicine">-</span></div>
+        <div><strong>Dosage:</strong> <span id="prescriptionDosage">-</span></div>
+        <div><strong>Duration:</strong> <span id="prescriptionDuration">-</span></div>
+        <div class="full"><strong>Instructions:</strong> <span id="prescriptionInstructions">-</span></div>
+        <div class="full"><strong>File:</strong> <span id="prescriptionFile">-</span></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn-view" id="closePrescriptionModal">Close</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="surgeryModal" aria-hidden="true">
+    <div class="modal-box">
+      <h3 style="margin: 0;">Surgery Record Details</h3>
+      <div class="modal-grid">
+        <div><strong>Added At:</strong> <span id="surgeryAddedAt">-</span></div>
+        <div><strong>Added By:</strong> <span id="surgeryAddedBy">-</span></div>
+        <div><strong>Procedure:</strong> <span id="surgeryProcedure">-</span></div>
+        <div><strong>Surgery Date:</strong> <span id="surgeryDate">-</span></div>
+        <div><strong>Surgeon:</strong> <span id="surgerySurgeon">-</span></div>
+        <div><strong>Outcome:</strong> <span id="surgeryOutcome">-</span></div>
+        <div class="full"><strong>Notes:</strong> <span id="surgeryNotes">-</span></div>
+        <div class="full"><strong>File:</strong> <span id="surgeryFile">-</span></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn-view" id="closeSurgeryModal">Close</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="diagnosisModal" aria-hidden="true">
+    <div class="modal-box">
+      <h3 style="margin: 0;">Diagnosis Record Details</h3>
+      <div class="modal-grid">
+        <div><strong>Added At:</strong> <span id="diagnosisAddedAt">-</span></div>
+        <div><strong>Added By:</strong> <span id="diagnosisAddedBy">-</span></div>
+        <div><strong>Condition:</strong> <span id="diagnosisCondition">-</span></div>
+        <div><strong>Severity:</strong> <span id="diagnosisSeverity">-</span></div>
+        <div class="full"><strong>Notes:</strong> <span id="diagnosisNotes">-</span></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn-view" id="closeDiagnosisModal">Close</button></div>
+    </div>
+  </div>
+
+  <script>
+    function setActiveTab(tabName) {
+      document.querySelectorAll('.tab-btn, .switch-pill').forEach(function (button) {
+        button.classList.toggle('active', button.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.tab-panel').forEach(function (panel) {
+        panel.classList.toggle('active', panel.id === tabName + '-panel');
+      });
+    }
+
+    document.querySelectorAll('.tab-btn, .switch-pill').forEach(function (button) {
+      button.addEventListener('click', function () {
+        setActiveTab(button.dataset.tab);
+      });
+    });
+
+    var vitalsModal = document.getElementById('vitalsModal');
+    var closeVitalsModal = document.getElementById('closeVitalsModal');
+    var labModal = document.getElementById('labModal');
+    var imagingModal = document.getElementById('imagingModal');
+    var prescriptionModal = document.getElementById('prescriptionModal');
+    var surgeryModal = document.getElementById('surgeryModal');
+    var diagnosisModal = document.getElementById('diagnosisModal');
+
+    function setModalValue(id, value) {
+      document.getElementById(id).textContent = value || '-';
+    }
+
+    function openModal(modal) {
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal(modal) {
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('.vitals-view-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        setModalValue('modalRecordedAt', button.dataset.recordedAt);
+        setModalValue('modalRecordedBy', button.dataset.recordedBy);
+        setModalValue('modalBloodPressure', button.dataset.bloodPressure);
+        setModalValue('modalBloodSugar', button.dataset.bloodSugar);
+        setModalValue('modalHeartRate', button.dataset.heartRate);
+        setModalValue('modalTemperature', button.dataset.temperature);
+        setModalValue('modalSpo2', button.dataset.spo2);
+        setModalValue('modalWeight', button.dataset.weight);
+        openModal(vitalsModal);
+      });
+    });
+
+    closeVitalsModal.addEventListener('click', function () {
+      closeModal(vitalsModal);
+    });
+
+    vitalsModal.addEventListener('click', function (event) {
+      if (event.target === vitalsModal) {
+        closeModal(vitalsModal);
+      }
+    });
+
+    document.querySelectorAll('.lab-view-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        setModalValue('labAddedAt', button.dataset.addedAt);
+        setModalValue('labAddedBy', button.dataset.addedBy);
+        setModalValue('labTestName', button.dataset.testName);
+        setModalValue('labResult', button.dataset.result);
+        setModalValue('labReferenceRange', button.dataset.referenceRange);
+        setModalValue('labStatus', button.dataset.status);
+        setModalValue('labNotes', button.dataset.notes);
+        setModalValue('labFile', button.dataset.file);
+        openModal(labModal);
+      });
+    });
+
+    document.getElementById('closeLabModal').addEventListener('click', function () { closeModal(labModal); });
+    labModal.addEventListener('click', function (event) { if (event.target === labModal) { closeModal(labModal); } });
+
+    document.querySelectorAll('.imaging-view-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        setModalValue('imagingAddedAt', button.dataset.addedAt);
+        setModalValue('imagingAddedBy', button.dataset.addedBy);
+        setModalValue('imagingScanType', button.dataset.scanType);
+        setModalValue('imagingBodyPart', button.dataset.bodyPart);
+        setModalValue('imagingFindings', button.dataset.findings);
+        setModalValue('imagingImpression', button.dataset.impression);
+        setModalValue('imagingFile', button.dataset.file);
+        openModal(imagingModal);
+      });
+    });
+
+    document.getElementById('closeImagingModal').addEventListener('click', function () { closeModal(imagingModal); });
+    imagingModal.addEventListener('click', function (event) { if (event.target === imagingModal) { closeModal(imagingModal); } });
+
+    document.querySelectorAll('.prescription-view-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        setModalValue('prescriptionAddedAt', button.dataset.addedAt);
+        setModalValue('prescriptionAddedBy', button.dataset.addedBy);
+        setModalValue('prescriptionMedicine', button.dataset.medicine);
+        setModalValue('prescriptionDosage', button.dataset.dosage);
+        setModalValue('prescriptionDuration', button.dataset.duration);
+        setModalValue('prescriptionInstructions', button.dataset.instructions);
+        setModalValue('prescriptionFile', button.dataset.file);
+        openModal(prescriptionModal);
+      });
+    });
+
+    document.getElementById('closePrescriptionModal').addEventListener('click', function () { closeModal(prescriptionModal); });
+    prescriptionModal.addEventListener('click', function (event) { if (event.target === prescriptionModal) { closeModal(prescriptionModal); } });
+
+    document.querySelectorAll('.surgery-view-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        setModalValue('surgeryAddedAt', button.dataset.addedAt);
+        setModalValue('surgeryAddedBy', button.dataset.addedBy);
+        setModalValue('surgeryProcedure', button.dataset.procedure);
+        setModalValue('surgeryDate', button.dataset.surgeryDate);
+        setModalValue('surgerySurgeon', button.dataset.surgeon);
+        setModalValue('surgeryOutcome', button.dataset.outcome);
+        setModalValue('surgeryNotes', button.dataset.notes);
+        setModalValue('surgeryFile', button.dataset.file);
+        openModal(surgeryModal);
+      });
+    });
+
+    document.getElementById('closeSurgeryModal').addEventListener('click', function () { closeModal(surgeryModal); });
+    surgeryModal.addEventListener('click', function (event) { if (event.target === surgeryModal) { closeModal(surgeryModal); } });
+
+    document.querySelectorAll('.diagnosis-view-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        setModalValue('diagnosisAddedAt', button.dataset.addedAt);
+        setModalValue('diagnosisAddedBy', button.dataset.addedBy);
+        setModalValue('diagnosisCondition', button.dataset.condition);
+        setModalValue('diagnosisSeverity', button.dataset.severity);
+        setModalValue('diagnosisNotes', button.dataset.notes);
+        openModal(diagnosisModal);
+      });
+    });
+
+    document.getElementById('closeDiagnosisModal').addEventListener('click', function () { closeModal(diagnosisModal); });
+    diagnosisModal.addEventListener('click', function (event) { if (event.target === diagnosisModal) { closeModal(diagnosisModal); } });
+  </script>
+</body>
+</html>

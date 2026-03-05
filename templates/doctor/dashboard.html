@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <style>
+    :root {
+      --primary: #2A7DE1;
+      --secondary: #E8F1FF;
+      --accent: #00A8A8;
+      --text: #1F2937;
+      --card: #FFFFFF;
+      --border: #c7dbfb;
+    }
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { margin: 0; background: var(--secondary); color: var(--text); }
+    .topbar {
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 18px rgba(42, 125, 225, 0.28);
+    }
+    .topbar a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .container { max-width: 900px; margin: 28px auto; padding: 0 18px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 12px 30px rgba(42, 125, 225, 0.12);
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    h2 { margin: 0 0 12px; font-size: 20px; color: var(--primary); }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 10px 18px;
+      font-size: 15px;
+    }
+    .meta b { color: var(--primary); }
+    label { font-weight: 600; color: var(--text); }
+    .form-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 240px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: #f9fcff;
+      color: var(--text);
+    }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .links { display: flex; gap: 12px; flex-wrap: wrap; }
+    .links a {
+      text-decoration: none;
+      color: var(--primary);
+      font-weight: 700;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f6faff;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <strong>UHC Portal</strong>
+    <a href="{% url 'logout' %}">Logout</a>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h1>Doctor Dashboard</h1>
+      <div class="meta">
+        <div><b>Name:</b> Dr. {{ profile.user.get_full_name }}</div>
+        <div><b>Email:</b> {{ profile.user.email }}</div>
+        <div><b>Specialization:</b> {{ profile.specialization }}</div>
+        <div><b>Hospital:</b> {{ profile.hospital }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Enter Patient NFC ID</h2>
+      <form method="post" action="{% url 'search_patient' %}">
+        {% csrf_token %}
+        <label>NFC UID</label>
+        <div class="form-row">
+          <input type="text" name="nfc_uid" placeholder="Example: NFC001" required>
+          <button type="submit">Find Patient</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="links">
+      <a href="{% url 'search_patient' %}">Open Patient Search Page</a>
+    </div>
+  </div>
+</body>
+</html>

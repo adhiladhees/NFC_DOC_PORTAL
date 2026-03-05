@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Doctor Login</title>
+  <style>
+    :root {
+      --primary: #2A7DE1;
+      --secondary: #E8F1FF;
+      --accent: #00A8A8;
+      --text: #1F2937;
+      --card: #FFFFFF;
+      --border: #c7dbfb;
+    }
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f5f9ff 0%, var(--secondary) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .hero {
+      width: min(760px, 95vw);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(42, 125, 225, 0.16);
+      padding: 26px;
+      text-align: center;
+    }
+    .title { margin: 0; font-size: 30px; color: var(--primary); }
+    .subtitle { margin: 8px 0 22px; color: #4b5563; }
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .action-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(42, 125, 225, 0.22);
+    }
+    .action-btn.login { background: var(--primary); }
+    .action-btn.signup { background: var(--accent); box-shadow: 0 10px 20px rgba(0, 168, 168, 0.22); }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(31, 41, 55, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal.open { display: flex; }
+    .modal-card {
+      width: min(520px, 94vw);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 20px 40px rgba(42, 125, 225, 0.2);
+      padding: 22px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .modal-title { margin: 0; color: var(--primary); }
+    .close-btn {
+      border: none;
+      background: #eef5ff;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .error {
+      margin: 0 0 12px;
+      color: #991b1b;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .form-grid { display: grid; gap: 10px; }
+    label { font-size: 14px; font-weight: 700; margin-top: 4px; }
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fbfdff;
+    }
+    .submit-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .submit-btn.login { background: var(--primary); }
+    .submit-btn.signup { background: var(--accent); }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1 class="title">UHC Doctor Portal</h1>
+    <p class="subtitle">Choose an option to continue</p>
+
+    <div class="action-row">
+      <button class="action-btn login" type="button" id="openLogin">Login</button>
+      <button class="action-btn signup" type="button" id="openSignup">Signup</button>
+    </div>
+  </section>
+
+  <div class="modal" id="loginModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Doctor Login</h2>
+        <button type="button" class="close-btn" data-close="loginModal">×</button>
+      </div>
+
+      {% if error and auth_mode == 'login' %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}" class="form-grid">
+        {% csrf_token %}
+        <label>Email</label>
+        <input type="email" name="email" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <button class="submit-btn login" type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="signupModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Doctor Signup</h2>
+        <button type="button" class="close-btn" data-close="signupModal">×</button>
+      </div>
+
+      {% if error and auth_mode == 'signup' %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+
+      <form method="post" action="{% url 'signup' %}" class="form-grid">
+        {% csrf_token %}
+        <label>Full Name</label>
+        <input type="text" name="name" required>
+
+        <label>Email</label>
+        <input type="email" name="email" required>
+
+        <label>Specialization</label>
+        <input type="text" name="specialization" required>
+
+        <label>Hospital</label>
+        <input type="text" name="hospital" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <button class="submit-btn signup" type="submit">Sign Up</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    var loginModal = document.getElementById('loginModal');
+    var signupModal = document.getElementById('signupModal');
+
+    function openModal(modal) {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal(modal) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.getElementById('openLogin').addEventListener('click', function () {
+      openModal(loginModal);
+    });
+
+    document.getElementById('openSignup').addEventListener('click', function () {
+      openModal(signupModal);
+    });
+
+    document.querySelectorAll('.close-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        closeModal(document.getElementById(button.dataset.close));
+      });
+    });
+
+    [loginModal, signupModal].forEach(function (modal) {
+      modal.addEventListener('click', function (event) {
+        if (event.target === modal) {
+          closeModal(modal);
+        }
+      });
+    });
+
+    var authMode = '{{ auth_mode|default:"" }}';
+    if (authMode === 'login') {
+      openModal(loginModal);
+    }
+    if (authMode === 'signup') {
+      openModal(signupModal);
+    }
+  </script>
+</body>
+</html>
