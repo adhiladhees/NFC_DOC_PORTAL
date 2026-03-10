@@ -1,0 +1,1 @@
+web: gunicorn uhc_portal.wsgi --log-file -
