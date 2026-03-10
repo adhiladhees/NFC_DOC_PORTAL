@@ -1,7 +1,53 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import *
+
+
+def recalculate_health_score(patient):
+    score = 100
+
+    # Diagnoses
+    for d in patient.diagnoses.all():
+        if d.severity == 'Chronic':   score -= 15
+        elif d.severity == 'Severe':  score -= 12
+        elif d.severity == 'Moderate':score -= 6
+        elif d.severity == 'Mild':    score -= 3
+
+    # Lab results
+    for l in patient.lab_results.all():
+        if l.status == 'Critical':    score -= 10
+        elif l.status == 'High':      score -= 5
+        elif l.status == 'Low':       score -= 3
+
+    # Latest vitals only
+    latest = patient.vitals.order_by('-recorded_at').first()
+    if latest:
+        try:
+            sys_bp = int(latest.blood_pressure.split('/')[0])
+            if sys_bp > 140: score -= 5
+        except: pass
+        try:
+            if float(latest.blood_sugar) > 140: score -= 5
+        except: pass
+        try:
+            if float(latest.spo2) < 95: score -= 5
+        except: pass
+        try:
+            hr = float(latest.heart_rate)
+            if hr > 100 or hr < 60: score -= 3
+        except: pass
+
+    # Surgery
+    for s in patient.surgeries.all():
+        if s.outcome == 'Complicated':       score -= 8
+        elif s.outcome == 'Ongoing Recovery':score -= 5
+
+    patient.health_score = max(0, min(100, score))
+    patient.save()
 
 
 @login_required
@@ -114,6 +160,7 @@ def add_vitals(request, patient_id):
 			recorded_by=request.user
 		)
 		messages.success(request, 'Vitals saved successfully.')
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -123,6 +170,7 @@ def delete_vitals(request, patient_id, vitals_id):
 	vitals_record = get_object_or_404(Vitals, id=vitals_id, patient=patient)
 	if request.method == 'POST':
 		vitals_record.delete()
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -140,6 +188,7 @@ def add_lab(request, patient_id):
 			file=request.FILES.get('file'),
 			added_by=request.user
 		)
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -151,6 +200,7 @@ def delete_lab(request, patient_id, lab_id):
 		if lab_record.file:
 			lab_record.file.delete(save=False)
 		lab_record.delete()
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -167,6 +217,7 @@ def add_imaging(request, patient_id):
 			file=request.FILES.get('file'),
 			added_by=request.user
 		)
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -178,6 +229,7 @@ def delete_imaging(request, patient_id, imaging_id):
 		if imaging_record.file:
 			imaging_record.file.delete(save=False)
 		imaging_record.delete()
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -194,6 +246,7 @@ def add_prescription(request, patient_id):
 			file=request.FILES.get('file'),
 			added_by=request.user
 		)
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -205,6 +258,7 @@ def delete_prescription(request, patient_id, prescription_id):
 		if prescription_record.file:
 			prescription_record.file.delete(save=False)
 		prescription_record.delete()
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -222,6 +276,7 @@ def add_surgery(request, patient_id):
 			file=request.FILES.get('file'),
 			added_by=request.user
 		)
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -233,6 +288,7 @@ def delete_surgery(request, patient_id, surgery_id):
 		if surgery_record.file:
 			surgery_record.file.delete(save=False)
 		surgery_record.delete()
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -247,6 +303,7 @@ def add_diagnosis(request, patient_id):
 			notes=request.POST.get('notes', ''),
 			added_by=request.user
 		)
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
 
 
@@ -256,4 +313,213 @@ def delete_diagnosis(request, patient_id, diagnosis_id):
 	diagnosis_record = get_object_or_404(Diagnosis, id=diagnosis_id, patient=patient)
 	if request.method == 'POST':
 		diagnosis_record.delete()
+	recalculate_health_score(patient)
 	return redirect('patient_detail', patient_id=patient_id)
+
+
+# ── API 1: Fetch patient by NFC UID (used by mobile app after card tap) ──
+def patient_api(request, nfc_uid):
+	try:
+		patient = Patient.objects.get(nfc_uid__iexact=nfc_uid)
+
+		import json as json_module
+		from django.core.serializers.json import DjangoJSONEncoder
+
+		data = {
+			'found': True,
+			'id': patient.id,
+			'nfc_uid': patient.nfc_uid,
+			'name': patient.name,
+			'age': patient.age,
+			'gender': patient.gender,
+			'blood_group': patient.blood_group,
+			'phone': patient.phone,
+			'address': patient.address,
+			'height': patient.height,
+			'weight': patient.weight,
+			'health_score': patient.health_score,
+
+			'vitals': list(patient.vitals.order_by('-recorded_at').values(
+				'id', 'blood_pressure', 'blood_sugar', 'heart_rate',
+				'temperature', 'spo2', 'weight', 'recorded_at',
+				'recorded_by__username'
+			)),
+			'lab_results': list(patient.lab_results.order_by('-added_at').values(
+				'id', 'test_name', 'result', 'reference_range',
+				'status', 'notes', 'added_at', 'added_by__username'
+			)),
+			'imaging': list(patient.imaging.order_by('-added_at').values(
+				'id', 'scan_type', 'body_part', 'findings',
+				'impression', 'added_at', 'added_by__username'
+			)),
+			'prescriptions': list(patient.prescriptions.order_by('-added_at').values(
+				'id', 'medicine', 'dosage', 'duration',
+				'instructions', 'added_at', 'added_by__username'
+			)),
+			'surgeries': list(patient.surgeries.order_by('-surgery_date').values(
+				'id', 'procedure', 'surgery_date', 'surgeon',
+				'outcome', 'notes', 'added_by__username'
+			)),
+			'diagnoses': list(patient.diagnoses.order_by('-added_at').values(
+				'id', 'condition', 'severity', 'notes',
+				'added_at', 'added_by__username'
+			)),
+		}
+
+		data_str = json_module.dumps(data, cls=DjangoJSONEncoder)
+		data = json_module.loads(data_str)
+
+	except Patient.DoesNotExist:
+		data = {'found': False, 'message': 'No patient found with this NFC ID'}
+	return JsonResponse(data)
+
+
+# ── API 2: Register new patient (used by mobile app on first setup) ──
+@csrf_exempt
+def patient_register(request):
+    if request.method == 'POST':
+        try:
+            body = json.loads(request.body)
+            name        = body.get('name', '').strip()
+            age         = body.get('age')
+            gender      = body.get('gender', '').strip()
+            blood_group = body.get('blood_group', '').strip()
+            phone       = body.get('phone', '').strip()
+            address     = body.get('address', '').strip()
+            height      = body.get('height', '').strip()
+            weight      = body.get('weight', '').strip()
+            pin         = body.get('pin', '0000').strip()
+
+            # Validate required fields
+            if not all([name, age, gender, blood_group, phone, address]):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'All fields are required'
+                }, status=400)
+
+            # Auto generate NFC UID
+            count = Patient.objects.count() + 1
+            nfc_uid = f'NFC{count:03d}'
+
+            # Make sure UID is unique
+            while Patient.objects.filter(nfc_uid=nfc_uid).exists():
+                count += 1
+                nfc_uid = f'NFC{count:03d}'
+
+            # Create the patient
+            patient = Patient.objects.create(
+                nfc_uid     = nfc_uid,
+                name        = name,
+                age         = int(age),
+                gender      = gender,
+                blood_group = blood_group,
+                phone       = phone,
+                address     = address,
+                height      = height,
+                weight      = weight,
+                pin         = pin,
+                health_score= 100,
+            )
+
+            return JsonResponse({
+                'success': True,
+                'nfc_uid': patient.nfc_uid,
+                'name': patient.name,
+                'message': 'Patient registered successfully'
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=500)
+
+    return JsonResponse({
+        'success': False,
+        'message': 'Only POST requests allowed'
+    }, status=405)
+
+
+@csrf_exempt
+def patient_pin_login(request):
+	if request.method == 'POST':
+		try:
+			body = json.loads(request.body)
+			nfc_uid = body.get('nfc_uid', '').strip()
+			pin = body.get('pin', '').strip()
+
+			if not nfc_uid or not pin:
+				return JsonResponse({
+					'success': False,
+					'message': 'NFC ID and PIN are required'
+				}, status=400)
+
+			patient = Patient.objects.get(nfc_uid__iexact=nfc_uid)
+
+			if patient.pin == pin:
+				import json as json_module
+				from django.core.serializers.json import DjangoJSONEncoder
+				data = {
+					'success': True,
+					'found': True,
+					'id': patient.id,
+					'nfc_uid': patient.nfc_uid,
+					'name': patient.name,
+					'age': patient.age,
+					'gender': patient.gender,
+					'blood_group': patient.blood_group,
+					'phone': patient.phone,
+					'address': patient.address,
+					'height': patient.height,
+					'weight': patient.weight,
+					'health_score': patient.health_score,
+					'vitals': list(patient.vitals.order_by('-recorded_at').values(
+						'id', 'blood_pressure', 'blood_sugar', 'heart_rate',
+						'temperature', 'spo2', 'weight', 'recorded_at',
+						'recorded_by__username'
+					)),
+					'lab_results': list(patient.lab_results.order_by('-added_at').values(
+						'id', 'test_name', 'result', 'reference_range',
+						'status', 'notes', 'added_at', 'added_by__username'
+					)),
+					'imaging': list(patient.imaging.order_by('-added_at').values(
+						'id', 'scan_type', 'body_part', 'findings',
+						'impression', 'added_at', 'added_by__username'
+					)),
+					'prescriptions': list(patient.prescriptions.order_by('-added_at').values(
+						'id', 'medicine', 'dosage', 'duration',
+						'instructions', 'added_at', 'added_by__username'
+					)),
+					'surgeries': list(patient.surgeries.order_by('-surgery_date').values(
+						'id', 'procedure', 'surgery_date', 'surgeon',
+						'outcome', 'notes', 'added_by__username'
+					)),
+					'diagnoses': list(patient.diagnoses.order_by('-added_at').values(
+						'id', 'condition', 'severity', 'notes',
+						'added_at', 'added_by__username'
+					)),
+				}
+				data_str = json_module.dumps(data, cls=DjangoJSONEncoder)
+				data = json_module.loads(data_str)
+				return JsonResponse(data)
+			else:
+				return JsonResponse({
+					'success': False,
+					'message': 'Incorrect PIN'
+				}, status=401)
+
+		except Patient.DoesNotExist:
+			return JsonResponse({
+				'success': False,
+				'message': 'Patient not found'
+			}, status=404)
+		except Exception as e:
+			return JsonResponse({
+				'success': False,
+				'message': str(e)
+			}, status=500)
+
+	return JsonResponse({
+		'success': False,
+		'message': 'Only POST requests allowed'
+	}, status=405)

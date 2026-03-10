@@ -13,6 +13,7 @@ class Patient(models.Model):
 	height = models.CharField(max_length=10, blank=True)
 	weight = models.CharField(max_length=10, blank=True)
 	health_score = models.IntegerField(default=70)
+	pin = models.CharField(max_length=4, default='0000')
 
 	def __str__(self):
 		return self.name

@@ -743,6 +743,38 @@
   </div>
 
   <script>
+    function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i += 1) {
+          var cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    function syncCsrfTokenOnPostForms() {
+      var csrfCookie = getCookie('csrftoken');
+      if (!csrfCookie) {
+        return;
+      }
+      document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function (form) {
+        form.addEventListener('submit', function () {
+          var tokenInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+          if (tokenInput) {
+            tokenInput.value = csrfCookie;
+          }
+        });
+      });
+    }
+
+    syncCsrfTokenOnPostForms();
+
     function setActiveTab(tabName) {
       document.querySelectorAll('.tab-btn, .switch-pill').forEach(function (button) {
         button.classList.toggle('active', button.dataset.tab === tabName);

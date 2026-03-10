@@ -3,6 +3,13 @@ from . import views
 
 urlpatterns = [
     path('search/', views.search_patient, name='search_patient'),
+
+    # ── APIs for mobile app ──
+    path('api/register/', views.patient_register, name='patient_register'),
+    path('api/pin-login/', views.patient_pin_login, name='patient_pin_login'),
+    path('api/<str:nfc_uid>/', views.patient_api, name='patient_api'),
+
+    # ── existing URLs unchanged ──
     path('<int:patient_id>/', views.patient_detail, name='patient_detail'),
     path('<int:patient_id>/add/vitals/', views.add_vitals, name='add_vitals'),
     path('<int:patient_id>/delete/vitals/<int:vitals_id>/', views.delete_vitals, name='delete_vitals'),
