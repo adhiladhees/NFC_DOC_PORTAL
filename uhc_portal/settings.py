@@ -13,6 +13,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%mp4pjf47k_+n3u4fbs#d
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['https://web-production-2449a.up.railway.app']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
