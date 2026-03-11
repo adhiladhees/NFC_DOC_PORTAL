@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard</title>
   <style>
     :root {
@@ -83,6 +84,41 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       background: #f6faff;
+    }
+
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 12px 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .container {
+        margin: 18px auto;
+        padding: 0 12px;
+      }
+      .card {
+        padding: 16px;
+      }
+      h1 { font-size: 24px; }
+      h2 { font-size: 18px; }
+      .meta {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      input[type="text"] {
+        min-width: 0;
+      }
+      button {
+        width: 100%;
+      }
+      .links a {
+        width: 100%;
+        text-align: center;
+      }
     }
   </style>
 </head>

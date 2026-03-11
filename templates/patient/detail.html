@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Patient Detail</title>
   <style>
     :root {
@@ -21,6 +22,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
       box-shadow: 0 4px 18px rgba(42, 125, 225, 0.28);
     }
     .topbar a {
@@ -79,7 +82,10 @@
       padding: 10px;
       box-shadow: 0 6px 14px rgba(42, 125, 225, 0.08);
     }
-    .main { padding: 20px; }
+    .main {
+      padding: 20px;
+      min-width: 0;
+    }
     .card {
       background: var(--card);
       border-radius: 14px;
@@ -196,6 +202,7 @@
     .record-text {
       flex: 1;
       min-width: 0;
+      overflow-wrap: anywhere;
     }
     .record-actions {
       margin-left: auto;
@@ -233,6 +240,96 @@
     .modal-actions { text-align: right; margin-top: 14px; }
     .muted { color: #516079; }
     a { color: var(--primary); }
+
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 220px 1fr;
+      }
+      .patient-grid {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 12px 14px;
+      }
+      .topbar a {
+        margin-left: 8px;
+      }
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 12px;
+      }
+      .visit-log {
+        max-height: none;
+      }
+      .main {
+        padding: 12px;
+      }
+      .card {
+        padding: 14px;
+      }
+      .patient-card {
+        grid-template-columns: 1fr;
+      }
+      .photo {
+        width: 84px;
+        height: 84px;
+      }
+      .patient-grid {
+        grid-template-columns: 1fr;
+      }
+      .record-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .record-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+      .tab-switcher {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+      }
+      .switch-pill {
+        flex: 0 0 auto;
+      }
+      .modal-box {
+        width: calc(100vw - 24px);
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .topbar a {
+        margin-left: 0;
+      }
+      .btn-view,
+      .btn-delete,
+      .btn {
+        width: 100%;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 <body>

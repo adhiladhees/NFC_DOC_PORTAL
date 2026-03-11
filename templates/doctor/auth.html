@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Doctor Login</title>
   <style>
     :root {
@@ -120,6 +121,29 @@
     }
     .submit-btn.login { background: var(--primary); }
     .submit-btn.signup { background: var(--accent); }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+        align-items: flex-start;
+      }
+      .hero {
+        width: 100%;
+        padding: 20px 16px;
+        margin-top: 12px;
+      }
+      .title { font-size: 24px; }
+      .subtitle { margin-bottom: 16px; }
+      .action-row { grid-template-columns: 1fr; }
+      .action-btn {
+        font-size: 16px;
+        padding: 12px;
+      }
+      .modal-card {
+        width: 100%;
+        padding: 18px 14px;
+      }
+    }
   </style>
 </head>
 <body>
