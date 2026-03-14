@@ -140,6 +140,34 @@
       border-color: var(--primary);
       box-shadow: 0 8px 16px rgba(42, 125, 225, 0.24);
     }
+    .graph-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .graph-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #1f2638;
+      background: #121620;
+      color: #8b96b0;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .graph-btn.active {
+      background: #00c9a7;
+      border-color: #00c9a7;
+      color: #07090f;
+    }
+
+    .graph-btn:hover {
+      border-color: #00c9a7;
+      color: #00c9a7;
+    }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
     .records .record-item {
@@ -400,6 +428,83 @@
       </div>
 
       <section class="tab-panel active" id="vitals-panel">
+        <!-- Vitals Graph Section -->
+        <div class="card">
+          <h3>Vitals Graph</h3>
+          <div class="graph-btns">
+            <button class="graph-btn active" onclick="showGraph('bp')">Blood Pressure</button>
+            <button class="graph-btn" onclick="showGraph('sugar')">Blood Sugar</button>
+            <button class="graph-btn" onclick="showGraph('hr')">Heart Rate</button>
+            <button class="graph-btn" onclick="showGraph('spo2')">SpO2</button>
+            <button class="graph-btn" onclick="showGraph('weight')">Weight</button>
+          </div>
+          <canvas id="vitalsChart" style="max-height: 300px;"></canvas>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+          const vitalsData = {
+            labels: [{% for item in vitals %}"{{ item.recorded_at|date:'d M Y' }}"{% if not forloop.last %},{% endif %}{% endfor %}].reverse(),
+            bp: [{% for item in vitals %}"{{ item.blood_pressure|default:'0' }}"{% if not forloop.last %},{% endif %}{% endfor %}].reverse().map(v => parseInt(v.split('/')[0]) || 0),
+            sugar: [{% for item in vitals %}"{{ item.blood_sugar|default:'0' }}"{% if not forloop.last %},{% endif %}{% endfor %}].reverse().map(v => parseFloat(v) || 0),
+            hr: [{% for item in vitals %}"{{ item.heart_rate|default:'0' }}"{% if not forloop.last %},{% endif %}{% endfor %}].reverse().map(v => parseFloat(v) || 0),
+            spo2: [{% for item in vitals %}"{{ item.spo2|default:'0' }}"{% if not forloop.last %},{% endif %}{% endfor %}].reverse().map(v => parseFloat(v) || 0),
+            weight: [{% for item in vitals %}"{{ item.weight|default:'0' }}"{% if not forloop.last %},{% endif %}{% endfor %}].reverse().map(v => parseFloat(v) || 0),
+          };
+
+          const graphConfig = {
+            bp:     { label: 'Blood Pressure (mmHg)', color: '#f05252' },
+            sugar:  { label: 'Blood Sugar (mg/dL)',   color: '#f5a623' },
+            hr:     { label: 'Heart Rate (bpm)',       color: '#3d8ef8' },
+            spo2:   { label: 'SpO2 (%)',              color: '#00c9a7' },
+            weight: { label: 'Weight (kg)',            color: '#a855f7' },
+          };
+
+          const ctx = document.getElementById('vitalsChart').getContext('2d');
+          let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: vitalsData.labels,
+              datasets: [{
+                label: graphConfig.bp.label,
+                data: vitalsData.bp,
+                borderColor: graphConfig.bp.color,
+                backgroundColor: graphConfig.bp.color + '22',
+                borderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                tension: 0.4,
+                fill: true,
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { labels: { color: '#dce4f5' } },
+              },
+              scales: {
+                x: { ticks: { color: '#8b96b0' }, grid: { color: '#1f2638' } },
+                y: { ticks: { color: '#8b96b0' }, grid: { color: '#1f2638' } },
+              }
+            }
+          });
+
+          let activeBtn = document.querySelector('.graph-btn.active');
+
+          function showGraph(type) {
+            const config = graphConfig[type];
+            chart.data.datasets[0].label = config.label;
+            chart.data.datasets[0].data = vitalsData[type];
+            chart.data.datasets[0].borderColor = config.color;
+            chart.data.datasets[0].backgroundColor = config.color + '22';
+            chart.update();
+
+            if (activeBtn) activeBtn.classList.remove('active');
+            activeBtn = event.target;
+            activeBtn.classList.add('active');
+          }
+        </script>
+
         <div class="card records">
           <h3>Existing Vitals Records</h3>
           {% for item in vitals %}
